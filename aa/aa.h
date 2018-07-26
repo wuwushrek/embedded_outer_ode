@@ -15,7 +15,7 @@ public:
 	// Constructor
 	AF1(real center = 0.0f);
 	AF1(const AF1 &);
-	AF1(const Interval &);
+	AF1(const Interval&);
 
 	// Destructor
 	~AF1();
@@ -23,6 +23,9 @@ public:
 	// Overloading operators
 	AF1 & operator = (const AF1 &);
 	AF1 & operator = (const real);
+
+	real & operator[](uint8_t );
+	real operator[](uint8_t ) const;
 
 	AF1 operator + (const AF1 &) const;
 	AF1 operator - (const AF1 &) const;
@@ -36,18 +39,17 @@ public:
 	AF1 operator * (const real) const;
 	AF1 operator / (const real) const;
 
-#ifdef VERBOSE
-	void af1print(const char *) const;
-#endif
-
 	real getCenter() const;
-	interval getRange() const;
+	Interval getInterval() const;
 	real getErrorTerm() const;
+
+	real getMax() const;
+	real getMin() const;
+	real getRadius() const;
 
 	friend AF1 cos(const AF1 &);
 	friend AF1 sin(const AF1 &);
 	friend AF1 tan(const AF1 &);
-	friend AF1 power(const uint8_t);
 	friend AF1 inv(const AF1 &);
 };
 
