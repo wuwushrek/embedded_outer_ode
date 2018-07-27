@@ -470,6 +470,14 @@ AF1 tan(const AF1 &other)
 	a = other.center - r;
 	b = other.center + r;
 
+	// In case the angles are not between -PI/2 and PI/2
+	if (a>= M_PI/2 || a <= -M_PI/2){
+		real temp = floor(a / (M_PI));
+		a -= temp *  M_PI;
+		a -= (a > (M_PI/2)) ? M_PI : 0;
+		b = a + 2*r;
+	}
+
 	assert_af(! ( (a <= M_PI/2 && b >= M_PI/2 ) || (a <= -M_PI/2 && b >= -M_PI/2 ) ));
 
 	real fa , fb;
