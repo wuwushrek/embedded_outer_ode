@@ -10,6 +10,7 @@ private:
 	real center;
 	real deviations[N_NOISE];
 	real err_term;
+	static uint8_t index_last;
 
 public:
 	// Constructor
@@ -31,7 +32,7 @@ public:
 	AF1 operator - (const AF1 &) const;
 	AF1 operator * (const AF1 &) const;
 	AF1 operator / (const AF1 &) const;
-	AF1 operator ^ (const uint8_t) const;
+	// AF1 operator ^ (const uint8_t) const;
 
 	// unary operator minus
 	AF1 operator - () const;

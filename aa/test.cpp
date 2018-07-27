@@ -47,5 +47,32 @@ int main()
 	res = af4 / af4;
 	print_af(res);
 
+	res = af1 / af3;
+	print_af(res);
+
+	// pow
+	res = af1*af1;
+	print_af(res);
+	print_it(res.getInterval());
+
+	//sin
+	res = sin((af1+2) * (M_PI / 20));
+	print_af(res);
+	print_it(res.getInterval());
+
+	//cos
+	res = cos((af1+2) * (M_PI / 20));
+	print_af(res);
+	print_it(res.getInterval());
+
+	//tan
+	res = tan((af1+2) * (M_PI / 20));
+	print_af(res);
+	print_it(res.getInterval());
+
+	res = sin((af1+2) * (M_PI / 20)) / cos((af1+2) * (M_PI / 20));
+	print_af(res);
+	print_it(res.getInterval());
+
 	return 0;
 }

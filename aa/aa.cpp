@@ -3,6 +3,8 @@
 
 using namespace std;
 
+uint8_t AF1::index_last = 0;
+
 /************************************************************/
 /* Common definition of constructor + getter of affine form */
 /************************************************************/
@@ -26,10 +28,13 @@ AF1::AF1(const Interval &it)
 {
 	this->center = it.getCenter();
 	for (uint8_t index = 1; index < N_NOISE ; index++){
-		this->deviations[index] = 0.0f;
+		if (index != index_last)
+			this->deviations[index] = 0.0f;
 	}
-	this->deviations[0] = it.getRadius();
+	this->deviations[index_last] = it.getRadius();
 	this->err_term = 0.0f;
+	index_last++;
+	assert_af(index_last <= N_NOISE);
 }
 
 AF1::~AF1(){}
@@ -224,14 +229,12 @@ AF1 AF1::operator / (const AF1 &other) const
 #endif
 }
 
-AF1 AF1::operator ^ (const uint8_t n) const
+/*AF1 AF1::operator ^ (const uint8_t n) const
 {
 	if (n == 0)
 		return AF1(1.0);
 	else if (n == 1)
 		return *this;
-	else if (n== -1)
-		return inv(*this);
 
 	real a , b;
 	real r;
@@ -311,7 +314,7 @@ AF1 AF1::operator ^ (const uint8_t n) const
 	temp.err_term = this->err_term + delta;
 
 	return temp;
-}
+}*/
 
 AF1 inv(const AF1 &other)
 {
@@ -379,7 +382,7 @@ AF1 operator - (real val, const AF1 &af)
 /* 	Affine form approximation of trigonometry functions  	*/
 /************************************************************/
 
-/* NEED to optimize PI/2 PI/4 2PI by pre calculating them */
+/* TODO: NEED to optimize PI/2 PI/4 2PI by pre calculating them */
 AF1 sin(const AF1 &other)
 {
 	real a , b;
@@ -417,7 +420,7 @@ AF1 sin(const AF1 &other)
 	if( b < 0 || (b < M_PI  && a > 0)){ // chebyshev approx in  this case
 		if (r > MIN_RAD){
 			alpha = (fb - fa) / (b - a);
-			real sol = ((alpha > 0) - (alpha < 0)) * acos(alpha);
+			real sol = ((a > 0) - (a < 0)) * acos(alpha);
 			real fsol = sqrt(1 - alpha*alpha); // fast computation of sin(acos)
 			dzeta = (fa + fsol - alpha * (a + sol)) / 2;
 			delta = abs(fsol - fa - alpha * (sol - a)) / 2;
