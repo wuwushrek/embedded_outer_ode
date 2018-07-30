@@ -32,6 +32,9 @@ public:
 	AF1 operator - (const AF1 &) const;
 	AF1 operator * (const AF1 &) const;
 	AF1 operator / (const AF1 &) const;
+
+	AF1 & operator += (const AF1 &);
+	AF1 & operator -= (const AF1 &);
 	// AF1 operator ^ (const uint8_t) const;
 
 	// unary operator minus
@@ -47,6 +50,8 @@ public:
 	real getMax() const;
 	real getMin() const;
 	real getRadius() const;
+
+	AF1 scaleAF(const real val) const;
 
 	friend AF1 cos(const AF1 &);
 	friend AF1 sin(const AF1 &);

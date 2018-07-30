@@ -104,6 +104,16 @@ real AF1::getMin() const
 	return this->getCenter() - this->getRadius();
 }
 
+AF1 scaleAF(const real val) const
+{
+	AF1 temp(*this);
+	for (uint8_t index = 0 ; index < N_NOISE ; index++){
+		temp[index] *= val;
+	}
+	// Do we need to scale the err term (NO for the moment)
+	return temp;
+}
+
 
 /************************************************************/
 /* 	Affine form basic arithmetic operations definition   	*/
@@ -165,6 +175,26 @@ AF1 AF1::operator / (const real val) const
 	}
 	temp.err_term /= abs(val);
 	return temp;
+}
+
+AF1 & operator += (const AF1 &other)
+{
+	this->center += other.center;
+	for (uint8_t i=0 ; i< N_NOISE ; i++){
+		this->deviations[i] += other[i];
+	}
+	this->err_term += other.err_term;
+	return *this;
+}
+
+AF1 & operator -= (const AF1 &other)
+{
+	this->center -= other.center;
+	for (uint8_t i=0 ; i< N_NOISE ; i++){
+		this->deviations[i] -= other[i];
+	}
+	this->err_term += other.err_term;
+	return *this;
 }
 
 /************************************************************/

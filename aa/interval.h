@@ -5,7 +5,7 @@
 
 class Interval
 {
-private:
+public:
 	real l_elem;
 	real r_elem;
 
@@ -16,11 +16,21 @@ public:
 
 	Interval & operator = (const Interval &);
 
+	Interval operator + (const Interval &) const;
+	Interval operator - (const Interval &) const;
+	Interval operator * (const Interval &) const;
+	Interval operator / (const Interval &) const;
+
+	Interval & operator += (const Interval &);
+	Interval & operator -= (const Interval &);
+
 	real getCenter() const;
 	real getMin() const;
 	real getMax() const;
 	real getRadius() const;
 	real getRange() const;
+
+	static uint8_t subseteq(const Interval& , const Interval&) const;
 };
 
 #endif //__INTERVAL_H__
