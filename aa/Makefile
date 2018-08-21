@@ -5,15 +5,15 @@ ARFLAGS = -r
 
 CC=g++
 
-CFLAGS=-c -Wall
+CFLAGS=-c -Wall -std=c++11
 # EXTRA_ARGS= -DFAST_MULT -DFAST_DIV -DN_NOISE=3
-EXTRA_ARGS= -DN_NOISE=3
+EXTRA_ARGS= -DN_NOISE=2
 
 LDFLAGS=
 
 RM = rm -f 
 
-SOURCES=aa.cpp interval.cpp
+SOURCES=aa_mod.cpp interval.cpp
 
 OBJECTS=$(SOURCES:.cpp=.o)
 
@@ -25,7 +25,7 @@ static:	$(LIB)
 $(LIB): $(SOURCES) $(OBJECTS)
 		@echo "\n - Compiling $(LIB) -\n"
 		@rm -f $(LIB)
-		$(AR) $(ARFLAGS) $(EXTRA_ARGS) $(LIB) $(OBJECTS)
+		$(AR) $(ARFLAGS) $(LIB) $(OBJECTS)
 
 all: $(SOURCES) $(EXECUTABLE)
 

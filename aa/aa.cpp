@@ -3,12 +3,12 @@
 
 using namespace std;
 
-uint8_t AF1::index_last = 0;
+uint8_t MAF1::index_last = 0;
 
 /************************************************************/
 /* Common definition of constructor + getter of affine form */
 /************************************************************/
-AF1::AF1(real center)
+MAF1::MAF1(real center)
 {
 	this->center = center;;
 	for (uint8_t index = 0; index < N_NOISE ; index++){
@@ -17,29 +17,32 @@ AF1::AF1(real center)
 	this->err_term = 0.0f;
 }
 
-AF1::AF1(const AF1 &af)
+MAF1::MAF1(const MAF1 &af)
 {
 	this->center = af.center;
 	memcpy(this->deviations , af.deviations , sizeof(af.deviations));
 	this->err_term = af.err_term;
 }
 
-AF1::AF1(const Interval &it)
+MAF1::MAF1(const Interval &it)
 {
 	this->center = it.getCenter();
-	for (uint8_t index = 1; index < N_NOISE ; index++){
-		if (index != index_last)
-			this->deviations[index] = 0.0f;
+	for (uint8_t index = 0; index < N_NOISE ; index++){
+		this->deviations[index] = 0.0f;
 	}
-	this->deviations[index_last] = it.getRadius();
-	this->err_term = 0.0f;
-	index_last++;
-	assert_af(index_last <= N_NOISE);
+	if (index_last >= N_NOISE)
+		this->err_term = it.getRadius();
+	else {
+		this->deviations[index_last] = it.getRadius();
+		this->err_term = 0.0f;
+		index_last++;
+	}
+	// assert_af(index_last <= N_NOISE);
 }
 
-AF1::~AF1(){}
+MAF1::~MAF1(){}
 
-AF1 & AF1::operator = (const real center)
+MAF1 & MAF1::operator = (const real center)
 {
 	this->center = center;
 	for (uint8_t index = 0; index < N_NOISE ; index++){
@@ -49,7 +52,7 @@ AF1 & AF1::operator = (const real center)
 	return *this;
 }
 
-AF1 & AF1::operator = (const AF1 &af)
+MAF1 & MAF1::operator = (const MAF1 &af)
 {
 	this->center = af.center;
 	memcpy(this->deviations , af.deviations , sizeof(af.deviations));
@@ -57,35 +60,35 @@ AF1 & AF1::operator = (const AF1 &af)
 	return *this;
 }
 
-real & AF1::operator[](uint8_t index) 
+real & MAF1::operator[](uint8_t index) 
 {
 	assert_af(index>=0 && index < N_NOISE);
 	return this->deviations[index];
 }
 
-real AF1::operator[](uint8_t index) const
+real MAF1::operator[](uint8_t index) const
 {
 	assert_af(index>=0 && index < N_NOISE);
 	return this->deviations[index];
 }
 
-real AF1::getCenter() const
+real MAF1::getCenter() const
 {
 	return this->center;
 }
 
-Interval AF1::getInterval() const
+Interval MAF1::getInterval() const
 {
 	real radius = this->getRadius();
 	return Interval(this->center - radius , this->center + radius);
 }
 
-real AF1::getErrorTerm() const
+real MAF1::getErrorTerm() const
 {
 	return this->err_term;
 }
 
-real AF1::getRadius() const
+real MAF1::getRadius() const
 {
 	real radius = this->err_term;
 	for (uint8_t index = 0 ; index < N_NOISE ; index ++){
@@ -94,34 +97,39 @@ real AF1::getRadius() const
 	return radius;
 }
 
-real AF1::getMax() const
+real MAF1::getMax() const
 {
 	return this->getCenter() + this->getRadius();
 }
 
-real AF1::getMin() const
+real MAF1::getMin() const
 {
 	return this->getCenter() - this->getRadius();
 }
 
-AF1 scaleAF(const real val) const
+void MAF1::compress_af(real tol)
 {
-	AF1 temp(*this);
-	for (uint8_t index = 0 ; index < N_NOISE ; index++){
-		temp[index] *= val;
-	}
-	// Do we need to scale the err term (NO for the moment)
-	return temp;
+	return ;
 }
 
+#ifdef VERBOSE
+void MAF1::print_af()
+{
+	printf("Center = %f \n", this->center);
+	for (uint8_t i=0 ; i < N_NOISE ; i++){
+		printf("---> eps[%d] = %f \n", (int) i , this->deviations[i]);
+	}
+	printf("-------------------------------\n");
+}
+#endif
 
 /************************************************************/
 /* 	Affine form basic arithmetic operations definition   	*/
 /************************************************************/
 
-AF1 AF1::operator + (const AF1 &other) const
+MAF1 MAF1::operator + (const MAF1 &other) const
 {
-	AF1 temp(*this);
+	MAF1 temp(*this);
 	temp.center += other.center;
 	for (uint8_t index=0 ; index< N_NOISE ; index++){
 		temp[index] += other.deviations[index];
@@ -131,9 +139,9 @@ AF1 AF1::operator + (const AF1 &other) const
 }
 
 
-AF1 AF1::operator - (const AF1 &other) const
+MAF1 MAF1::operator - (const MAF1 &other) const
 {
-	AF1 temp(*this);
+	MAF1 temp(*this);
 	temp.center -= other.center;
 	for (uint8_t index=0 ; index< N_NOISE ; index++){
 		temp[index] -= other.deviations[index];
@@ -142,9 +150,9 @@ AF1 AF1::operator - (const AF1 &other) const
 	return temp;
 }
 
-AF1 AF1::operator - () const
+MAF1 MAF1::operator - () const
 {
-	AF1 temp(*this);
+	MAF1 temp(*this);
 	temp.center *= -1;
 	for (uint8_t index=0 ; index< N_NOISE ; index++){
 		temp[index] *= -1;
@@ -153,9 +161,9 @@ AF1 AF1::operator - () const
 	return temp;
 }
 
-AF1 AF1::operator * (const real val) const
+MAF1 MAF1::operator * (const real val) const
 {
-	AF1 temp(*this);
+	MAF1 temp(*this);
 	temp.center *= val;
 	for (uint8_t index=0 ; index< N_NOISE ; index++){
 		temp[index] *= val;
@@ -164,11 +172,11 @@ AF1 AF1::operator * (const real val) const
 	return temp;
 }
 
-AF1 AF1::operator / (const real val) const
+MAF1 MAF1::operator / (const real val) const
 {
 	assert_af(val != 0);
 
-	AF1 temp(*this);
+	MAF1 temp(*this);
 	temp.center /= val;
 	for (uint8_t index=0 ; index< N_NOISE ; index++){
 		temp[index] /= val;
@@ -177,7 +185,7 @@ AF1 AF1::operator / (const real val) const
 	return temp;
 }
 
-AF1 & operator += (const AF1 &other)
+MAF1 & MAF1::operator += (const MAF1 &other)
 {
 	this->center += other.center;
 	for (uint8_t i=0 ; i< N_NOISE ; i++){
@@ -187,7 +195,7 @@ AF1 & operator += (const AF1 &other)
 	return *this;
 }
 
-AF1 & operator -= (const AF1 &other)
+MAF1 & MAF1::operator -= (const MAF1 &other)
 {
 	this->center -= other.center;
 	for (uint8_t i=0 ; i< N_NOISE ; i++){
@@ -201,10 +209,10 @@ AF1 & operator -= (const AF1 &other)
 /* 	Affine form basic arithmetic operations approximation  	*/
 /************************************************************/
 
-AF1 AF1::operator * (const AF1 &other) const
+MAF1 MAF1::operator * (const MAF1 &other) const
 {
 	uint8_t index;
-	AF1 temp;
+	MAF1 temp;
 
 	// Center of the new affine form update
 #ifndef FAST_MULT
@@ -223,7 +231,7 @@ AF1 AF1::operator * (const AF1 &other) const
 	// accumulation Error term update
 #ifndef FAST_MULT
 	for(index = 0; index < N_NOISE ; index++){
-		temp.err_term += abs(other[index]* abs(this->deviations[index]));
+		temp.err_term += abs(other[index] * this->deviations[index]);
 	}
 	temp.err_term /= -2;
 #endif
@@ -232,7 +240,7 @@ AF1 AF1::operator * (const AF1 &other) const
 	return temp;
 }
 
-AF1 AF1::operator / (const AF1 &other) const
+MAF1 MAF1::operator / (const MAF1 &other) const
 {
 #ifndef FAST_DIV
 	real r;
@@ -247,7 +255,7 @@ AF1 AF1::operator / (const AF1 &other) const
 	b = other.center + r;
 	assert_af(a*b > 0);
 
-	AF1 temp;
+	MAF1 temp;
 	real curr_center = this->center / other.center;
 	for (uint8_t index = 0 ; index <N_NOISE ; index++){
 		temp[index] = this->deviations[index] - curr_center*other[index];
@@ -259,10 +267,10 @@ AF1 AF1::operator / (const AF1 &other) const
 #endif
 }
 
-/*AF1 AF1::operator ^ (const uint8_t n) const
+/*MAF1 MAF1::operator ^ (const uint8_t n) const
 {
 	if (n == 0)
-		return AF1(1.0);
+		return MAF1(1.0);
 	else if (n == 1)
 		return *this;
 
@@ -276,7 +284,7 @@ AF1 AF1::operator / (const AF1 &other) const
 		for(uint8_t i =0 ; i< n ; i++){
 			a *= this->center;
 		}
-		return AF1(a);
+		return MAF1(a);
 	}
 
 	a = this->center - r;
@@ -336,7 +344,7 @@ AF1 AF1::operator / (const AF1 &other) const
 	dzeta = 0.5*(y_1 + y_2);
 
 	// inverse of other
-	AF1 temp;
+	MAF1 temp;
 	temp.center = alpha * this->center + dzeta;
 	for (uint8_t index = 0 ; index < N_NOISE ; index++){
 		temp[index] = this->deviations[index] * alpha;
@@ -346,7 +354,7 @@ AF1 AF1::operator / (const AF1 &other) const
 	return temp;
 }*/
 
-AF1 inv(const AF1 &other)
+MAF1 inv(const MAF1 &other)
 {
 	real a , b;
 	real r;
@@ -354,7 +362,7 @@ AF1 inv(const AF1 &other)
 	r = other.getRadius();
 
 	if (r == 0)
-		return AF1(1.0/other.center);
+		return MAF1(1.0/other.center);
 
 	a = other.center - r;
 	b = other.center + r;
@@ -377,7 +385,7 @@ AF1 inv(const AF1 &other)
 	}
 
 	// inverse of other
-	AF1 temp;
+	MAF1 temp;
 	temp.center = alpha * other.center + dzeta;
 	for (uint8_t index = 0 ; index < N_NOISE ; index++){
 		temp[index] = other[index] * alpha;
@@ -387,22 +395,22 @@ AF1 inv(const AF1 &other)
 	return temp;
 }
 
-AF1 operator * (real val, const AF1 &af)
+MAF1 operator * (real val, const MAF1 &af)
 {
 	return af * val;
 }
 
-AF1 operator / (real val, const AF1 &af)
+MAF1 operator / (real val, const MAF1 &af)
 {
 	return af / val;
 }
 
-AF1 operator + (real val , const AF1 &af)
+MAF1 operator + (real val , const MAF1 &af)
 {
 	return af + val;
 }
 
-AF1 operator - (real val, const AF1 &af)
+MAF1 operator - (real val, const MAF1 &af)
 {
 	return af - val;
 }
@@ -413,7 +421,7 @@ AF1 operator - (real val, const AF1 &af)
 /************************************************************/
 
 /* TODO: NEED to optimize PI/2 PI/4 2PI by pre calculating them */
-AF1 sin(const AF1 &other)
+MAF1 sin(const MAF1 &other)
 {
 	real a , b;
 	real r;
@@ -421,12 +429,12 @@ AF1 sin(const AF1 &other)
 	r = other.getRadius();
 
 	if (r == 0)
-		return AF1(sin(other.center));
+		return MAF1(sin(other.center));
 
 	assert_af( r < M_PI/4); // For the moment
 
 	/*if ( r >= 2*M_PI ){
-		AF1 res;
+		MAF1 res;
 		res.err_term = 1.0f;
 		return res;
 	}*/
@@ -472,7 +480,7 @@ AF1 sin(const AF1 &other)
 		dzeta = (fa + fb - alpha * (a + b)) / 2;
 	}
 
-	AF1 temp;
+	MAF1 temp;
 	temp.center = alpha * other.center + dzeta;
 	for (uint8_t index = 0 ; index < N_NOISE ; index++){
 		temp[index] = other[index] * alpha;
@@ -482,12 +490,12 @@ AF1 sin(const AF1 &other)
 	return temp;
 }
 
-AF1 cos(const AF1 &other)
+MAF1 cos(const MAF1 &other)
 {
 	return sin(other + M_PI/2);
 }
 
-AF1 tan(const AF1 &other)
+MAF1 tan(const MAF1 &other)
 {
 	real a , b;
 	real r;
@@ -495,7 +503,7 @@ AF1 tan(const AF1 &other)
 	r = other.getRadius();
 
 	if (r == 0)
-		return AF1(tan(other.center));
+		return MAF1(tan(other.center));
 
 	a = other.center - r;
 	b = other.center + r;
@@ -537,7 +545,7 @@ AF1 tan(const AF1 &other)
 		delta = abs(aux - fa - alpha * (eps - a)) / 2;
 	}
 
-	AF1 temp;
+	MAF1 temp;
 	temp.center = alpha * other.center + dzeta;
 	for (uint8_t index = 0 ; index < N_NOISE ; index++){
 		temp[index] = other[index] * alpha;

@@ -29,8 +29,13 @@ public:
 	real getMax() const;
 	real getRadius() const;
 	real getRange() const;
+	
+#ifdef VERBOSE
+	void print_it();
+#endif
 
-	static uint8_t subseteq(const Interval& , const Interval&) const;
 };
+
+uint8_t subseteq(const Interval& , const Interval&);
 
 #endif //__INTERVAL_H__

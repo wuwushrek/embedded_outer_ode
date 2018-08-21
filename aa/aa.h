@@ -4,7 +4,7 @@
 #include "config.h"
 #include "interval.h"
 
-class AF1 {
+class MAF1 {
 
 private:
 	real center;
@@ -14,34 +14,34 @@ private:
 
 public:
 	// Constructor
-	AF1(real center = 0.0f);
-	AF1(const AF1 &);
-	AF1(const Interval&);
+	MAF1(real center = 0.0f);
+	MAF1(const MAF1 &);
+	MAF1(const Interval&);
 
 	// Destructor
-	~AF1();
+	~MAF1();
 
 	// Overloading operators
-	AF1 & operator = (const AF1 &);
-	AF1 & operator = (const real);
+	MAF1 & operator = (const MAF1 &);
+	MAF1 & operator = (const real);
 
 	real & operator[](uint8_t );
 	real operator[](uint8_t ) const;
 
-	AF1 operator + (const AF1 &) const;
-	AF1 operator - (const AF1 &) const;
-	AF1 operator * (const AF1 &) const;
-	AF1 operator / (const AF1 &) const;
+	MAF1 operator + (const MAF1 &) const;
+	MAF1 operator - (const MAF1 &) const;
+	MAF1 operator * (const MAF1 &) const;
+	MAF1 operator / (const MAF1 &) const;
 
-	AF1 & operator += (const AF1 &);
-	AF1 & operator -= (const AF1 &);
-	// AF1 operator ^ (const uint8_t) const;
+	MAF1 & operator += (const MAF1 &);
+	MAF1 & operator -= (const MAF1 &);
+	// MAF1 operator ^ (const uint8_t) const;
 
 	// unary operator minus
-	AF1 operator - () const;
+	MAF1 operator - () const;
 
-	AF1 operator * (const real) const;
-	AF1 operator / (const real) const;
+	MAF1 operator * (const real) const;
+	MAF1 operator / (const real) const;
 
 	real getCenter() const;
 	Interval getInterval() const;
@@ -51,17 +51,21 @@ public:
 	real getMin() const;
 	real getRadius() const;
 
-	AF1 scaleAF(const real val) const;
+	void compress_af(real tol);
 
-	friend AF1 cos(const AF1 &);
-	friend AF1 sin(const AF1 &);
-	friend AF1 tan(const AF1 &);
-	friend AF1 inv(const AF1 &);
+#ifdef VERBOSE
+	void print_af();
+#endif
+	
+	friend MAF1 cos(const MAF1 &);
+	friend MAF1 sin(const MAF1 &);
+	friend MAF1 tan(const MAF1 &);
+	friend MAF1 inv(const MAF1 &);
 };
 
-AF1 operator * (real , const AF1 &);
-AF1 operator / (real , const AF1 &);
-AF1 operator + (real , const AF1 &);
-AF1 operator - (real , const AF1 &);
+MAF1 operator * (real , const MAF1 &);
+MAF1 operator / (real , const MAF1 &);
+MAF1 operator + (real , const MAF1 &);
+MAF1 operator - (real , const MAF1 &);
 
 #endif //__AA_H__
