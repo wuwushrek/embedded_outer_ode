@@ -109,7 +109,7 @@ class DAF
   real getRadius() const;
 
 #ifdef VERBOSE
-  void print_af();
+  void print_af(FILE *f = NULL);
 #endif
 
   Interval getInterval() const;

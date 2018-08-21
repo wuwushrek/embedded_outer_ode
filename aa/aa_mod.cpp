@@ -147,8 +147,17 @@ void MAF2::compress_af(real tol)
 }
 
 #ifdef VERBOSE
-void MAF2::print_af()
+void MAF2::print_af(FILE *file)
 {
+	if (file != NULL){
+		fprintf(file,"Center = %f \n", this->center);
+		fprintf(file,"nbIndexes = %d \n", this->nbIndexes);
+		for (uint16_t i=0 ; i < this->nbIndexes ; i++){
+			fprintf(file,"---> eps[%d] = %f \n", (int) this->indexes[i] , this->deviations[i]);
+		}
+		fprintf(file,"-------------------------------\n");
+		return ;
+	}
 	printf("Center = %f \n", this->center);
 	printf("nbIndexes = %d \n", this->nbIndexes);
 	for (uint16_t i=0 ; i < this->nbIndexes ; i++){

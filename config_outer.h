@@ -20,19 +20,13 @@
 	#define T_ORDER 2
 #endif
 
-#ifndef TIME_STEP_FIXED
-	#define TIME_STEP_FIXED 1
-#endif
-
-#define MAX_WIDEN_FACTOR	1.0
-#define MIN_WIDEN_FACTOR	0.001
-
-#define WIDEN_MULT			1.2
-#define STEP_MULT			0.5 
+// #ifndef TIME_STEP_FIXED
+// 	#define TIME_STEP_FIXED 1
+// #endif
 
 #define H_MAX 0.1
 #define H_MIN 0.0001
 
-#define NOISE_TOL 1e-1
+#define NOISE_TOL 1e-6
 
 #endif // __CONFIG_OUTER_H__

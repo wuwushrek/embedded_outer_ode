@@ -267,8 +267,15 @@ std::ostream & operator << (std::ostream & s, const DAF & P)
 }
 
 #ifdef VERBOSE
-void DAF::print_af()
+void DAF::print_af(FILE *file)
 {
+  if (file != NULL){
+    std::ostringstream stream;
+    stream << *this << std::endl;
+    std::string str =  stream.str();
+    fprintf(file, "%s" , str.c_str());
+    return;
+  }
   std::cout << *this << std::endl;
 }
 #endif

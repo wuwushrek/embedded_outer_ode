@@ -113,8 +113,16 @@ void MAF1::compress_af(real tol)
 }
 
 #ifdef VERBOSE
-void MAF1::print_af()
+void MAF1::print_af(FILE *file)
 {
+	if (file != NULL){
+		fprintf(file,"Center = %f \n", this->center);
+		for (uint8_t i=0 ; i < N_NOISE ; i++){
+			fprintf(file,"---> eps[%d] = %f \n", (int) i , this->deviations[i]);
+		}
+		fprintf(file,"-------------------------------\n");
+		return ;
+	}
 	printf("Center = %f \n", this->center);
 	for (uint8_t i=0 ; i < N_NOISE ; i++){
 		printf("---> eps[%d] = %f \n", (int) i , this->deviations[i]);

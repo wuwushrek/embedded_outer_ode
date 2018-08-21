@@ -1,11 +1,11 @@
 CXX = g++ 
 
 N_STATE = 2
-N_NOISE = 15
+N_NOISE = 2
 T_ORDER = 2
 
 CURRENT_DIR = $(shell pwd)
-EXTRA_ARGS = -DUSE_MAF2 -DVERBOSE -DN_STATE=$(N_STATE) -DN_NOISE=$(N_NOISE) -DT_ORDER=$(T_ORDER)
+EXTRA_ARGS = -DUSE_MAF1 -DVERBOSE -DN_STATE=$(N_STATE) -DN_NOISE=$(N_NOISE) -DT_ORDER=$(T_ORDER)
 
 CXXFLAGS = -std=c++11 $(EXTRA_ARGS) -Wall -I. -I$(CURRENT_DIR)/aa
 
@@ -24,7 +24,7 @@ main : $(SOURCES) $(OBJECTS)
 	$(CXX) $(LDFLAGS) -o $@ $(OBJECTS_utils) $@.o
 
 clean:
-	-rm *.o aa/*.o main
+	-rm *.o aa/*.o main *.out
 
 .cpp.o:
 	$(CXX) $(CXXFLAGS)  -c $<

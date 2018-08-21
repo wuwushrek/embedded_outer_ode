@@ -113,6 +113,6 @@ real TM_val::fixpoint()
         }
         iter = iter+1;
     }
-    printf("iter = %d , step = %f \n", (int) iter , step);
+    // printf("iter = %d , step = %f \n", (int) iter , step);
     return step;
 }

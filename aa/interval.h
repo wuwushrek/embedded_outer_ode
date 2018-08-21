@@ -31,7 +31,7 @@ public:
 	real getRange() const;
 	
 #ifdef VERBOSE
-	void print_it();
+	void print_it(FILE *file = NULL);
 #endif
 
 };

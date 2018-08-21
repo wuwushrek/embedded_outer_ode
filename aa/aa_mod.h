@@ -55,7 +55,7 @@ public:
 	void compress_af(real tol);
 
 #ifdef VERBOSE
-	void print_af();
+	void print_af(FILE *f = NULL);
 #endif
 
 	friend MAF2 cos(const MAF2 &);

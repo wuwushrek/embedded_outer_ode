@@ -5,6 +5,12 @@
 #include <cmath>
 #include <cstdio>
 
+#ifdef VERBOSE
+	#include <string>
+	#include <cstdio>
+	#include <sstream>
+#endif
+
 // check if compilation is done for microcontroller -> chose your custom assert function
 #ifndef USE_MCU
 	#include <assert.h>

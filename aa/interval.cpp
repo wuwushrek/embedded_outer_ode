@@ -101,8 +101,12 @@ Interval & Interval::operator -= (const Interval &it)
 }
 
 #ifdef VERBOSE
-void Interval::print_it()
+void Interval::print_it(FILE *file)
 {
+	if (file != NULL){
+		fprintf(file ,"%f\t%f\n", this->getMin() , this->getMax());
+		return ;
+	}
 	printf("it = [%f , %f] \n", this->getMin() , this->getMax());
 }
 #endif
