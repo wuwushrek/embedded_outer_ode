@@ -27,6 +27,6 @@
 #define H_MAX 0.1
 #define H_MIN 0.0001
 
-#define NOISE_TOL 1e-6
+#define NOISE_TOL 1e-1
 
 #endif // __CONFIG_OUTER_H__
