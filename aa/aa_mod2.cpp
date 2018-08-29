@@ -283,6 +283,7 @@ void DAF::print_af(FILE *file)
 void DAF::compress_af(real tol)
 {
   real r = tol * this->getRadius();
+  // std::cout << "Nb index = " << length << std::endl;
   real rest = 0.0f;
   uint16_t index = 0;
   for(uint16_t i=0 ; i < length ; i++){
@@ -952,6 +953,12 @@ DAF operator - (real cst, DAF P)
   return (Temp);
 }
 
+
+DAF operator / (real val , const DAF af)
+{
+  return val * inv(af);
+}
+
 DAF DAF::operator * (const DAF & P) const
 {
   unsigned l1 = length;
@@ -1083,7 +1090,7 @@ DAF inv(const DAF & P)
   a = P.cvalue - r;
   b = P.cvalue + r;
 
-  assert_af(a*b < 0);
+  assert_af(a*b > 0);
   
 
   fa = 1/a;
@@ -1128,5 +1135,222 @@ DAF inv(const DAF & P)
   Temp.radius = fabs(alpha) * P.radius + fabs(delta);
 #endif
 
+  return Temp;
+}
+
+DAF sin(const DAF & P)
+{
+
+  real a, b;
+  real fa, fb;
+  real alpha, dzeta, delta;
+
+  if ((P.length == 0) || (P.length == 1 && P.deviations[0] == 0.))
+  {
+    DAF Temp(sin(P.cvalue));
+    return Temp;
+  }
+
+  real r = P.getRadius();
+
+  a = P.cvalue - r;
+  b = P.cvalue + r;
+
+  //assert ( a > -PI/2.0 && b < PI/2.0);
+  assert_af((a > -M_PI/2.0 && b < M_PI/2.0));
+
+  fa = sin(a);
+  fb = sin(b);
+
+  // Min range approximation on this interval
+  real theta = a;
+  alpha = cos(theta);
+
+  dzeta = 0.5 * (fa + fb - alpha * (a + b));
+  delta = 0.5 * (fb - fa - alpha * (b - a));
+  
+  DAF Temp(alpha*(P.cvalue)+dzeta);
+  
+  Temp.length=(P.length)+1;
+  Temp.size = Temp.length;
+  Temp.deviations = new real [Temp.size];
+  Temp.indexes = new unsigned [Temp.size];
+  
+  // zi = alpha*xi
+  
+  for (unsigned j=0; j < P.length; j++)
+  {
+    Temp.indexes[j]=P.indexes[j];
+    Temp.deviations[j]=alpha*(P.deviations[j]);
+  }
+  
+  // zk = delta
+  
+  Temp.indexes[P.length]=Temp.inclast();   // the error indx
+  Temp.deviations[P.length]=delta;
+  
+  return Temp;
+}
+
+
+/************************************************************
+ * Method:        cos
+ * Author & Date: ??? - ???
+ * Description:   
+ *   Cosine function
+ *   we use the identity cos(x)=sin(x+PI/2)
+ *
+ *   Input  : real : corresponding center value
+ *   Output : -
+ ************************************************************/
+DAF cos(const DAF & P)
+{
+
+  real a, b;
+  real fa, fb;
+  real alpha, dzeta, delta;
+
+  if ((P.length == 0) || (P.length == 1 && P.deviations[0] == 0.))
+  {
+    DAF Temp(cos(P.cvalue));
+    return Temp;
+  }
+
+  real r = P.getRadius();
+
+  a = P.cvalue - r;
+  b = P.cvalue + r;
+
+  //assert ( a > -PI/2.0 && b < PI/2.0);
+  assert_af((a > -M_PI/2.0 && b < M_PI/2.0));
+
+  fa = cos(a);
+  fb = cos(b);
+
+  // chebyshev approximation on this interval
+  if  ( r > 1.0e-6) 
+    alpha = (fb - fa) / (b - a);
+  else
+    alpha = - sin(a);
+
+  real sol = asin(-alpha);
+  // std::cout << " a = " << a << " ; sol1 = " << sol << " ; b = " << b << std::endl;
+  if ( ! (a <= sol && sol <= b) )
+    sol = (a + b) / 2.0;
+
+  real fsol = cos(sol);
+
+  dzeta = 0.5 * (fa + fsol - alpha * (a + sol));
+  delta = 0.5 * fabs(fsol - fa - alpha * (sol - a));
+
+  DAF Temp(alpha*(P.cvalue)+dzeta);
+  
+  Temp.length=(P.length)+1;
+  Temp.size = Temp.length;
+  Temp.deviations = new real [Temp.size];
+  Temp.indexes = new unsigned [Temp.size];
+  
+  // zi = alpha*xi
+  
+  for (unsigned j=0; j < P.length; j++)
+  {
+    Temp.indexes[j]=P.indexes[j];
+    Temp.deviations[j]=alpha*(P.deviations[j]);
+  }
+  
+  // zk = delta
+  
+  Temp.indexes[P.length]=Temp.inclast();   // the error indx
+  Temp.deviations[P.length]=delta;
+  
+  return Temp;
+  // DAF Temp = P;
+  // return sin(Temp+PI/2);
+}
+
+
+/************************************************************
+ * Method:        tan
+ * Author & Date: ??? - ???
+ * Description:   
+ *   Tangent function
+ *   we use the identity tan(x)=sin(x)/cos(x)
+ *   Due to the nature of the tan fct remember that
+ *   we can have infinite value with small intervals
+ *
+ *   Input  : real : corresponding center value
+ *   Output : -
+ ************************************************************/
+DAF tan(const DAF & P)
+{
+  real a, b;
+  real fa, fb;
+  real alpha, dzeta, delta;
+
+  if ((P.length == 0) || (P.length == 1 && P.deviations[0] == 0.))
+  {
+    DAF Temp(tan(P.cvalue));
+    return Temp;
+  }
+
+  real r = P.getRadius();
+
+  a = P.cvalue - r;
+  b = P.cvalue + r;
+
+  //assert ( a > -PI/2.0 && b < PI/2.0);
+  assert_af((a > -M_PI/2.0 && b < M_PI/2.0));
+
+  fa = tan(a);
+  fb = tan(b);
+
+  real sol;
+
+  if ( r > 1.0e-6)
+    alpha = (fb - fa)/(b-a);
+  else
+    alpha = 1.0 + tan(a)*tan(b);
+
+  real sol1 = atan(sqrt(alpha - 1.0));
+  real sol2 = atan(-sqrt(alpha - 1.0));
+  // std::cout << " a = " << a << " ; sol1 = " << sol1 << " ; b = " << b << std::endl;
+
+  if (a <= sol1 && sol1 <= b)
+    sol = sol1;
+  else if (a <= sol2 && sol2 <= b)
+    sol = sol2;
+  else
+    sol = (a + b) / 2.0;
+
+  real fsol = tan(sol);
+
+  if (a * b < 0){
+    dzeta = 0.0;
+    delta = fabs(fsol - alpha * sol);
+  } else {
+    dzeta = 0.5 * (fa + fsol - alpha * (a + sol));
+    delta = 0.5 * fabs(fsol - fa - alpha * (sol - a));
+  }
+
+  DAF Temp(alpha*(P.cvalue)+dzeta);
+  
+  Temp.length=(P.length)+1;
+  Temp.size = Temp.length;
+  Temp.deviations = new real [Temp.size];
+  Temp.indexes = new unsigned [Temp.size];
+  
+  // zi = alpha*xi
+  
+  for (unsigned j=0; j < P.length; j++)
+  {
+    Temp.indexes[j]=P.indexes[j];
+    Temp.deviations[j]=alpha*(P.deviations[j]);
+  }
+  
+  // zk = delta
+  
+  Temp.indexes[P.length]=Temp.inclast();   // the error indx
+  Temp.deviations[P.length]=delta;
+  
   return Temp;
 }

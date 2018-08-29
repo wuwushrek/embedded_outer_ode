@@ -1,6 +1,8 @@
 #include "ode_integr.h"
 #include <cstdio>
 
+#include <ctime>
+
 TM_val::TM_val(AF1 *xn , real t_end , real tn)
 {
 	this->tn = tn;
@@ -16,7 +18,8 @@ TM_val::TM_val(AF1 *xn , real t_end , real tn)
 TM_val::~TM_val(){}
 
 void TM_val::buildAndEval()
-{
+{   
+    clock_t begin = clock();
 	// Store the ode T_ORDER derivatives
 	ode_derivatives(this->xn , this->der);
 
@@ -25,6 +28,10 @@ void TM_val::buildAndEval()
 
 	// Get remainder
 	ode_reminder(this->apriori_enclosure , this->rem);
+
+    clock_t end = clock();
+    double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC; //getTotalTime (start_time , end_time );
+    std::cout << "[der+rem] elpased time (sec) =" << elapsed_secs << std::endl;
 
 	// Eval the T_ORDER first derivatives and save it inside xn
 	real temp_tau = curr_tau; 
@@ -61,12 +68,12 @@ real TM_val::fixpoint()
     AF1 fx0[N_STATE];
     double step = H_MAX;
 
-    int iter;
+    uint8_t iter;
     Interval widen, coeff;
     
     ode_function(this->xn , fx0);
 
-    for (int i=0; i<N_STATE ; i++){
+    for (uint8_t i=0; i<N_STATE ; i++){
         y1[i] = this->xn[i] + fx0[i].getInterval();
     }
     
@@ -91,28 +98,29 @@ real TM_val::fixpoint()
         
         if (iter > 2)
         {
-            for (int i=0; i<N_STATE ; i++){
+            for (uint8_t i=0; i<N_STATE ; i++){
                 y1[i] = y1[i] + coeff*widen*y1[i].getInterval();
             }
         }
 
         for(uint8_t i=0 ; i<N_STATE ; i++){
         	this->apriori_enclosure[i] = y1[i];
+            this->apriori_enclosure[i].compress_af(NOISE_TOL);
         }
 
         ode_function(this->apriori_enclosure,fx0);
 
         found_fixpoint = 1;
-
-        for (int i=0; i<N_STATE ; i++){
+        for (uint8_t i=0; i<N_STATE ; i++){
         	y1[i] = this->xn[i] + Interval(0,step) * fx0[i].getInterval();
         	if ( subseteq(y1[i].getInterval() , this->apriori_enclosure[i].getInterval()) == 0){
         		found_fixpoint = 0;
-        		i = N_STATE;
+                // i = N_STATE;
         	}
         }
         iter = iter+1;
+        // printf("Iter = %d\n", iter);
     }
-    // printf("iter = %d , step = %f \n", (int) iter , step);
+    printf("iter = %d , step = %f \n", (int) iter , step);
     return step;
 }
