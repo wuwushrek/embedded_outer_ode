@@ -288,7 +288,7 @@ void DAF::compress_af(real tol)
   uint16_t index = 0;
   for(uint16_t i=0 ; i < length ; i++){
     real temp = abs(this->deviations[i]);
-    if(temp >= r){
+    if(temp > r){
       this->deviations[index] = this->deviations[i];
       this->indexes[index] = this->indexes[i];
       index++;
@@ -297,6 +297,10 @@ void DAF::compress_af(real tol)
     }
   }
   if (index < length){
+    if (rest == 0){
+      length = index;
+      return ;
+    }
     deviations[index] = rest;
     indexes[index] = inclast();
     length = index+1;
@@ -1064,12 +1068,156 @@ DAF DAF::operator * (const DAF & P) const
   return Temp;
 }
 
+DAF & DAF::operator *= (const DAF & P)
+{
+  unsigned l1 = length;
+  unsigned l2 = P.length;
+
+  if (l1 == 0)
+  {
+    // if *this is real
+    real temp = cvalue;
+    *this = P;
+    *this *= temp;
+    return *this;
+  }
+  if (l2 == 0)
+  {
+    // if P is real
+    *this *= P.cvalue;
+    return *this;
+  }
+
+  unsigned * id1 = indexes;
+  unsigned * id2 = P.indexes;
+
+  real * va1 = deviations;
+  real * va2 = P.deviations;
+
+  unsigned * pu1 = id1;
+  unsigned * pu2 = id2;
+
+  unsigned * tempIndexes = new unsigned [l1+l2+1];
+  
+  unsigned * idtemp = tempIndexes;
+
+  // Fill the indexes array
+  unsigned * fin = std::set_union(id1, id1 + l1, id2, id2 + l2, idtemp);
+  unsigned ltemp = fin - idtemp;
+
+  real * tempDeviations = new real [ltemp + 1];
+  real * vatempg = tempDeviations;
+ 
+  real commonTermCenter = 0.0;
+  real commonTermDeviation = 0.0;
+
+  // Fill the deviations array
+
+  for (unsigned i = 0; i < ltemp; i++)
+  {
+    unsigned a = pu1 - id1;
+    unsigned b = pu2 - id2;
+    
+    if (a == l1 || id1[a] != idtemp[i])
+    {
+      vatempg[i] = cvalue*va2[b];  // cvalue*va2[b]+(P.cvalue)*0
+      pu2++;
+      continue;
+    }
+    
+    if (b == l2 || id2[b] != idtemp[i])
+    {
+      vatempg[i] = (P.cvalue)*va1[a];  // cvalue*0+(P.cvalue)*va1[a]
+      pu1++;
+      continue;
+    }
+    
+    vatempg[i] = cvalue*va2[b] + (P.cvalue)*va1[a];
+    commonTermCenter += va2[b]*va1[a];
+    commonTermDeviation += fabs(va2[b]*va1[a]);
+    pu1++;
+    pu2++;
+  }
+
+  // Compute the error in a new deviation symbol
+  real delta = getRadius()*P.getRadius();
+
+  // multiply cvalue
+  cvalue *= P.cvalue;
+
+  tempIndexes[ltemp] = inclast();
+
+  tempDeviations[ltemp] = delta;
+  // consider deviations occuring in both expressions  
+  commonTermCenter *= 0.5;
+  commonTermDeviation *= 0.5;
+  cvalue += commonTermCenter;
+  tempDeviations[ltemp] -= commonTermDeviation;
+
+  length = ltemp + 1;
+  size = length;
+
+  delete [] indexes;
+  delete [] deviations;
+
+  indexes = tempIndexes;
+  deviations = tempDeviations;
+
+  return *this;
+}
+
 DAF DAF::operator / (const DAF & P) const
 {
   if (this == &P)
     return DAF(1.0);
   else
     return (*this)*inv(P);
+}
+
+bool DAF::operator == (const DAF & P) const
+{
+  bool result = true;
+  
+  // if even the lengths are different we do not have to check further
+  if (length != P.length)
+    return false;
+  
+  // if the central value is not equal - there will be no equivalence
+  if (fabs(cvalue) < 1 && fabs(P.cvalue) < 1)
+  {
+    if (fabs(cvalue - P.cvalue) > 1E-15)
+      return false; 
+  }
+  else
+  {
+    if ( fabs(cvalue - P.cvalue) / (fabs(cvalue) + fabs(P.cvalue)) > 1E-15)
+      return false;
+  }
+  // compare if all deviations and their respective indexes both are equal
+  for (unsigned i = 0; i < length; i++) 
+  { 
+    if ( fabs(deviations[i]) < 1 &&  fabs(P.deviations[i]) < 1)
+    {
+      if ( fabs( deviations[i] - P.deviations[i]) > 1E-15 ||
+     (indexes[i] != P.indexes[i]) )
+      {
+  result = false;
+  break;
+      }
+    }
+    else
+    {
+      if ( fabs(deviations[i] - P.deviations[i]) /  
+     (fabs(deviations[i]) + fabs(P.deviations[i]) )  > 1E-15 ||
+     (indexes[i] != P.indexes[i]) )
+      {
+  result = false;
+  break;
+      }
+      
+    }
+  }
+  return result;
 }
 
 DAF inv(const DAF & P)

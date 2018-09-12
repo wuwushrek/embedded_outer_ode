@@ -3,52 +3,68 @@
 
 #include <ctime>
 
-TM_val::TM_val(AF1 *xn , real t_end , real tn)
+TM_val::TM_val(AF1 *x0 , real t0 , OdeFunc *f)
 {
-	this->tn = tn;
-	this->t_end = t_end;
-	this->xn = xn;
-
-	// Initialize xn interval values
-	// for (uint8_t i=0; i<N_STATE ; i++){
-	// 	this->xn_int[i] = xn[i].getInterval();
-	// }
+	this->tn = t0;
+	this->xn = x0;
+    this->ode_x = Ode<T_ORDER+1>(*f);
+    this->ode_g = Ode<T_ORDER+2>(*f);
+    this->m_f = f;
+    this->curr_tau = H_MAX;
 }
 
 TM_val::~TM_val(){}
 
 void TM_val::buildAndEval()
 {   
-    clock_t begin = clock();
-	// Store the ode T_ORDER derivatives
-	ode_derivatives(this->xn , this->der);
+    uint8_t i,j;
 
+    // clock_t begin = clock();
+
+    this->ode_x.reset();
+    for(i=0 ; i<N_STATE ; i++){
+        this->ode_x.x[i][0] = this->xn[i];
+    }
+    for(i=0 ; i<T_ORDER ; i++){
+        for(j =0 ; j<N_STATE ; j++){
+            this->ode_x.xp[j].eval(i);
+            this->ode_x.x[j][i+1] = ode_x.xp[j][i]/((real)(i+1));
+            // this->ode_x.x[j][i+1].getInterval().print_it();
+        }
+    }
+    // std::cout << "+++" << std::endl;
 	// Use fixpoint iteration to get the step size and the remainder
-	real curr_tau = fixpoint();
+	real new_curr_tau = fixpoint();
 
-	// Get remainder
-	ode_reminder(this->apriori_enclosure , this->rem);
+	this->ode_g.reset();
+    for(i=0 ; i<T_ORDER+1 ; i++){
+        for(j=0 ; j<N_STATE ; j++){
+            this->ode_g.xp[j].eval(i);
+            this->ode_g.x[j][i+1] = this->ode_g.xp[j][i]/((real)(i+1));
+        }
+    }
 
-    clock_t end = clock();
-    double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC; //getTotalTime (start_time , end_time );
-    std::cout << "[der+rem] elpased time (sec) =" << elapsed_secs << std::endl;
+    // clock_t end = clock();
+    // double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC; //getTotalTime (start_time , end_time );
+    // std::cout << "[der+rem] elpased time (sec) =" << elapsed_secs << std::endl;
 
 	// Eval the T_ORDER first derivatives and save it inside xn
-	real temp_tau = curr_tau; 
-	for (uint8_t i=0 ; i< T_ORDER ; i++){
-		for (uint8_t j=0 ; j< N_STATE ; j++){
-			this->xn[j] += this->der[i + j*T_ORDER] * temp_tau;
+	real temp_tau = new_curr_tau; 
+	for (i=1 ; i<= T_ORDER ; i++){
+		for (j=0 ; j< N_STATE ; j++){
+			this->xn[j] += this->ode_x.x[j][i] * temp_tau;
 		}
-		temp_tau *= curr_tau;
+		temp_tau *= new_curr_tau;
 	}
 
 	// Add the remainder to the previous sum
 	for(uint8_t i=0 ; i< N_STATE ; i++){
-		this->xn[i] += this->rem[i] * temp_tau;
+		this->xn[i] += this->ode_g.x[i][T_ORDER+1] * temp_tau;
 	}
 
 	// Update the new time
-	this->tn += curr_tau;
+	this->tn += new_curr_tau;
+    this->curr_tau = new_curr_tau;
 
 	// Update interval value for xn
 	for (uint8_t i=0 ; i<N_STATE ; i++){
@@ -59,6 +75,10 @@ void TM_val::buildAndEval()
 		// this->xn_int[i] = this->xn[i].getInterval();
 	}
 
+#ifdef TIME_STEP_VAR
+    this->curr_tau *= 1.2;
+#endif
+
 }
 
 real TM_val::fixpoint()
@@ -66,15 +86,16 @@ real TM_val::fixpoint()
 	// calcul de x satisfaisant x0 + [0,tau][f](x) \subseteq x
     AF1 y1[N_STATE];
     AF1 fx0[N_STATE];
-    double step = H_MAX;
+    real step = this->curr_tau;
 
     uint8_t iter;
     Interval widen, coeff;
     
-    ode_function(this->xn , fx0);
+    this->m_f->operator () (fx0 , this->xn);
 
     for (uint8_t i=0; i<N_STATE ; i++){
         y1[i] = this->xn[i] + fx0[i].getInterval();
+        this->ode_g.x[i][1] = y1[i];
     }
     
     iter = 1;
@@ -83,6 +104,14 @@ real TM_val::fixpoint()
     uint8_t found_fixpoint = 0;
     while (iter <=1 || (found_fixpoint == 0))
     {
+#ifdef TIME_STEP_VAR
+        if (iter % 7 == 0){
+            step *= 0.5;
+            iter = 1;
+            for(uint8_t i= 0 ; i< N_STATE ; i++)
+                y1[i] = this->ode_g.x[i][1];
+        }
+#endif
         if (iter > 25)
             coeff = 1;
         else if (iter > 20)
@@ -104,16 +133,17 @@ real TM_val::fixpoint()
         }
 
         for(uint8_t i=0 ; i<N_STATE ; i++){
-        	this->apriori_enclosure[i] = y1[i];
-            this->apriori_enclosure[i].compress_af(NOISE_TOL);
+            y1[i].compress_af(NOISE_TOL);
+            this->ode_g.x[i][0] = y1[i];
         }
 
-        ode_function(this->apriori_enclosure,fx0);
+        this->m_f->operator () (fx0 , y1);
 
         found_fixpoint = 1;
         for (uint8_t i=0; i<N_STATE ; i++){
         	y1[i] = this->xn[i] + Interval(0,step) * fx0[i].getInterval();
-        	if ( subseteq(y1[i].getInterval() , this->apriori_enclosure[i].getInterval()) == 0){
+        	// y1[i].getInterval().print_it();
+            if ( subseteq(y1[i].getInterval() , this->ode_g.x[i][0].getInterval()) == 0){
         		found_fixpoint = 0;
                 // i = N_STATE;
         	}
@@ -121,6 +151,7 @@ real TM_val::fixpoint()
         iter = iter+1;
         // printf("Iter = %d\n", iter);
     }
-    printf("iter = %d , step = %f \n", (int) iter , step);
+    // std::cout << 
+    // printf("iter = %d , step = %f \n", (int) iter , step);
     return step;
 }

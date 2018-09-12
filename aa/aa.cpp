@@ -146,6 +146,18 @@ MAF1 MAF1::operator + (const MAF1 &other) const
 	return temp;
 }
 
+MAF1 MAF1::operator + (const real val) const
+{
+	MAF1 temp(*this);
+	temp.center += val;
+	return temp;
+}
+
+MAF1 & MAF1::operator += (const real val)
+{
+	this->center += val;
+	return *this;
+}
 
 MAF1 MAF1::operator - (const MAF1 &other) const
 {
@@ -156,6 +168,19 @@ MAF1 MAF1::operator - (const MAF1 &other) const
 	}
 	temp.err_term += other.err_term;
 	return temp;
+}
+
+MAF1 MAF1::operator - (const real val) const
+{
+	MAF1 temp(*this);
+	temp.center -= val;
+	return temp;
+}
+
+MAF1 & MAF1::operator -= (const real val)
+{
+	this->center -= val;
+	return *this;
 }
 
 MAF1 MAF1::operator - () const
@@ -178,6 +203,16 @@ MAF1 MAF1::operator * (const real val) const
 	}
 	temp.err_term *= abs(val);
 	return temp;
+}
+
+MAF1 & MAF1::operator *= (const real val)
+{
+	this->center *= val;
+	for(uint8_t index = 0 ; index < N_NOISE ; index++){
+		this->deviations[index] *= val;
+	}
+	this->err_term *= abs(val);
+	return *this;
 }
 
 MAF1 MAF1::operator / (const real val) const
@@ -246,6 +281,43 @@ MAF1 MAF1::operator * (const MAF1 &other) const
 	temp.err_term += other.err_term * abs(this->center) + this->err_term * abs(other.center) + other.getRadius()*this->getRadius();
 
 	return temp;
+}
+
+MAF1 & MAF1::operator *= (const MAF1 &other)
+{
+	uint8_t index;
+	real t_center = this->center;
+	real t_err = this->err_term;
+	real curr_radius = this->getRadius();
+	this->center = 0;
+	this->err_term = 0;
+
+	// Center of the new affine form update
+#ifndef FAST_MULT
+	for (index = 0; index < N_NOISE ; index++){
+		this->center += other[index] * this->deviations[index];
+	}
+	this->center /= 2;
+#endif
+	this->center += other.center * t_center;
+
+	// accumulation Error term update
+#ifndef FAST_MULT
+	for(index = 0; index < N_NOISE ; index++){
+		this->err_term += abs(other[index] * this->deviations[index]);
+	}
+	this->err_term /= -2;
+#endif
+	this->err_term += other.err_term * abs(t_center) + t_err * abs(other.center) + other.getRadius()*curr_radius;
+
+	// Noise terms update
+	for(index = 0 ; index< N_NOISE ; index++){
+		this->deviations[index] *= other.center;
+		this->deviations[index] += t_center * other[index];
+		// this->deviations[index] = other.center* this->deviations[index] + this->center * other[index];
+	}
+
+	return *this;	
 }
 
 MAF1 MAF1::operator / (const MAF1 &other) const
@@ -405,24 +477,47 @@ MAF1 inv(const MAF1 &other)
 
 MAF1 operator * (real val, const MAF1 &af)
 {
-	return af * val;
+	MAF1 temp(af);
+	temp *= val;
+	return temp;
 }
 
 MAF1 operator / (real val, const MAF1 &af)
 {
-	return af / val;
+	MAF1 temp(inv(af));
+	temp *= val;
+	return temp;
 }
 
 MAF1 operator + (real val , const MAF1 &af)
 {
-	return af + val;
+	MAF1 temp(af);
+	temp += val;
+	return temp;
 }
 
 MAF1 operator - (real val, const MAF1 &af)
 {
-	return af - val;
+	MAF1 temp(-af);
+	temp += val;
+	return temp;
 }
 
+bool MAF1::operator == (const MAF1 &af) const
+{
+	if (this->center != af.center)
+		return false;
+
+	for(uint8_t i=0 ; i< N_NOISE ; i++){
+		if(this->deviations[i] != af.deviations[i])
+			return false;
+	}
+
+	if(this->err_term != af.err_term)
+		return false;
+
+	return true;
+}
 
 /************************************************************/
 /* 	Affine form approximation of trigonometry functions  	*/

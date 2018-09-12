@@ -35,12 +35,24 @@ public:
 
 	MAF1 & operator += (const MAF1 &);
 	MAF1 & operator -= (const MAF1 &);
+	MAF1 & operator *= (const MAF1 &);
+
+	bool operator == (const MAF1 &) const;
 	// MAF1 operator ^ (const uint8_t) const;
 
 	// unary operator minus
 	MAF1 operator - () const;
 
+
+	MAF1 operator + (const real ) const;
+	MAF1 & operator += (const real );
+
+	MAF1 operator - (const real ) const;
+	MAF1 & operator -= (const real );
+
 	MAF1 operator * (const real) const;
+	MAF1 & operator *= (const real);
+
 	MAF1 operator / (const real) const;
 
 	real getCenter() const;

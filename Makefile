@@ -1,15 +1,15 @@
 CXX = g++ 
 
-N_STATE = 2
-N_NOISE = 15
-T_ORDER = 2
+N_STATE = 14
+N_NOISE = 20
+T_ORDER = 3	
 
 CURRENT_DIR = $(shell pwd)
-EXTRA_ARGS = -fstack-usage -DUSE_MAF2 -DN_STATE=$(N_STATE) -DN_NOISE=$(N_NOISE) -DT_ORDER=$(T_ORDER)
+EXTRA_ARGS = -fstack-usage  -DTIME_STEP_VAR -DUSE_MAF2 -DN_STATE=$(N_STATE) -DN_NOISE=$(N_NOISE) -DT_ORDER=$(T_ORDER)
 
 CXXFLAGS = -std=c++11 $(EXTRA_ARGS) -Wall -I. -I$(CURRENT_DIR)/aa
 
-SOURCES_utils = ode_integr.cpp ode_dyn.cpp aa/aa.cpp aa/aa_mod2.cpp aa/aa_mod.cpp aa/interval.cpp
+SOURCES_utils = ode_integr.cpp aa/aa.cpp aa/aa_mod2.cpp aa/aa_mod.cpp aa/interval.cpp
 Include_utils = config_outer.h ode_integr.h ode_dyn.h aa/aa_mod.h aa/aa.h aa/aa_mod2.h aa/config.h aa/interval.h
 
 SOURCES = $(SOURCES_utils) main.cpp

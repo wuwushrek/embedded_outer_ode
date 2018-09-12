@@ -100,6 +100,34 @@ Interval & Interval::operator -= (const Interval &it)
 	return *this;
 }
 
+Interval & Interval::operator *= (const Interval &it)
+{
+	real x1 = this->l_elem * it.l_elem;
+	real x2 = this->l_elem * it.r_elem;
+	real x3 = this->r_elem * it.l_elem;
+	real x4 = this->r_elem * it.r_elem;
+	this->l_elem = min(x1 , min(x2 , min(x3 , x4)));
+	this->r_elem = max(x1 , max(x2 , max(x3 , x4)));
+	return *this;
+}
+
+Interval & Interval::operator /= (const Interval &it)
+{
+	assert_af(it.l_elem * it.r_elem > 0);
+	real x1 = this->l_elem / it.r_elem;
+	real x2 = this->l_elem / it.l_elem;
+	real x3 = this->r_elem / it.r_elem;
+	real x4 = this->r_elem / it.l_elem;
+	this->l_elem = min(x1 , min(x2 , min(x3 , x4)));
+	this->r_elem = max(x1 , max(x2 , max(x3 , x4)));
+	return *this;
+}
+
+bool Interval::operator == (const Interval &it) const
+{
+	return it.l_elem == this->l_elem && it.r_elem == this->r_elem;
+}
+
 #ifdef VERBOSE
 void Interval::print_it(FILE *file)
 {

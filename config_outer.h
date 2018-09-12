@@ -1,6 +1,10 @@
 #ifndef __CONFIG_OUTER_H__
 #define __CONFIG_OUTER_H__
 
+#ifdef VERBOSE
+	#include <iostream>
+#endif
+
 #ifdef USE_MAF1
 	#include "aa.h"
 	typedef MAF1 AF1;
@@ -20,13 +24,14 @@
 	#define T_ORDER 2
 #endif
 
-// #ifndef TIME_STEP_FIXED
-// 	#define TIME_STEP_FIXED 1
-// #endif
+#ifndef N_PARAMS
+	#define N_PARAMS 4
+#endif
 
-#define H_MAX 0.1
-#define H_MIN 0.0001
+// #define RAD_2_DEG	M_PI/180.0f
 
-#define NOISE_TOL 1e-1
+#define H_MAX 0.02
+
+#define NOISE_TOL 1e-3
 
 #endif // __CONFIG_OUTER_H__

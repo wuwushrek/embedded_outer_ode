@@ -23,6 +23,10 @@ public:
 
 	Interval & operator += (const Interval &);
 	Interval & operator -= (const Interval &);
+	Interval & operator *= (const Interval &);
+	Interval & operator /= (const Interval &);
+
+	bool operator == (const Interval &) const;
 
 	real getCenter() const;
 	real getMin() const;

@@ -92,8 +92,13 @@ class DAF
   DAF & operator -= (real);
   DAF & operator *= (real);
   DAF & operator /= (real);
+
   DAF & operator += (const DAF &);
   DAF & operator -= (const DAF &);
+  DAF & operator *= (const DAF &);
+
+  bool operator == (const DAF &) const;
+  
   DAF operator * (real);
   DAF operator / (real) const;
 
